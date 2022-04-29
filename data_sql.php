@@ -31,12 +31,21 @@
 
   function order_member($company_id, $startDate, $endDate, $status, $new){
     $sql_query = "SELECT * FROM (`member` NATURAL JOIN `orders`) ";
-    $sql_query .= "NATURAL JOIN `choose` ";
-    $sql_query .= "WHERE choose.company_id = ".$company_id." ";
-    $sql_query .= "AND moving_date > '".$startDate."' ";
-    $sql_query .= "AND moving_date < '".$endDate." 23:59:59' ";
-    $sql_query .= "AND order_status = '".$status."'";
-    $sql_query .= "AND new = ".$new.";";
+    if(!strcmp($status, 'done')){
+      $sql_query .= "NATURAL JOIN `choose` NATURAL JOIN `staff_assignment` ";
+      $sql_query .= "WHERE choose.company_id = ".$company_id." ";
+      $sql_query .= "AND moving_date > '".$startDate."' ";
+      $sql_query .= "AND moving_date < '".$endDate." 23:59:59' ";
+      $sql_query .= "AND order_status = '".$status."'";
+      $sql_query .= "AND new = ".$new." ORDER BY moving_date DESC;";
+    }else{
+      $sql_query .= "NATURAL JOIN `choose` ";
+      $sql_query .= "WHERE choose.company_id = ".$company_id." ";
+      $sql_query .= "AND moving_date > '".$startDate."' ";
+      $sql_query .= "AND moving_date < '".$endDate." 23:59:59' ";
+      $sql_query .= "AND order_status = '".$status."'";
+      $sql_query .= "AND new = ".$new.";";
+    }
     $result = query($sql_query);
     return $result;
   }
@@ -78,7 +87,7 @@
   }
 
   function order_member_oneMonth($company_id, $monthStr, $month2Str){
-    $sql_query = "SELECT orders.order_id AS order_id, valuation_date, moving_date, last_update, valuation_status, order_status, member_name ";
+    $sql_query = "SELECT orders.order_id AS order_id, valuation_date, moving_date, last_update, valuation_status, order_status, member_name, plan ";
     $sql_query .= "FROM (`member` NATURAL JOIN `orders`) ";
     $sql_query .= "NATURAL JOIN `choose` ";
     $sql_query .= "WHERE choose.company_id = ".$company_id." ";
@@ -109,7 +118,7 @@
     $sql_query = "SELECT * FROM (`member` NATURAL JOIN `orders`) ";
     $sql_query .= "NATURAL JOIN `choose` ";
     $sql_query .= "WHERE choose.company_id = ".$company_id." ";
-    $sql_query .= "AND orders.order_id = '".$order_id."';";
+    $sql_query .= "AND orders.order_id = '".$order_id."' ;";
     $result = query($sql_query);
     return $result;
   }
@@ -166,7 +175,7 @@
     $sql_query = "SELECT * FROM `member` NATURAL JOIN ";
     $sql_query .= "(`orders` NATURAL JOIN `choose`) ";
     $sql_query .= "WHERE choose.company_id = ".$company_id." ";
-    $sql_query .= "AND orders.order_id = ".$order_id."; ";
+    $sql_query .= "AND orders.order_id = ".$order_id." ; ";
     $result = query($sql_query);
     return $result;
   }
@@ -217,7 +226,7 @@
      $result = query($sql_query);
      return $result;
    }
-   
+
    function company_fix_discount($company_id){
      $sql_query = "SELECT `fixDiscount`, `isEnable` FROM `company` ";
      $sql_query.= "WHERE company_id = ".$company_id.";";
@@ -261,7 +270,26 @@
     $result = query($sql_query);
     return $result;
   }
-
+  function overlap_staff($company_id, $date){
+    $sql_query = "SELECT * FROM `staff_assignment` ";
+    $sql_query .= "INNER JOIN staff ";
+    $sql_query .= "ON staff_assignment.staff_id = staff.staff_id ";
+    $sql_query .= "INNER JOIN choose ON staff_assignment.order_id = choose.order_id ";
+    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date."' ";
+    $sql_query .= "AND moving_date <= '".$date." 23:59:59' ; ";
+    $result = query($sql_query);
+    return $result;
+  }
+  function overlap_vehicle($company_id, $date){
+    $sql_query = "SELECT * FROM `vehicle_assignment` ";
+    $sql_query .= "INNER JOIN vehicle ";
+    $sql_query .= "ON vehicle_assignment.vehicle_id = vehicle.vehicle_id ";
+    $sql_query .= "INNER JOIN choose ON vehicle_assignment.order_id = choose.order_id ";
+    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date."' ";
+    $sql_query .= "AND moving_date <= '".$date." 23:59:59' ; ";
+    $result = query($sql_query);
+    return $result;
+  }
   function overlap_order($datetime, $endtime, $i, $company_id, $kind){
     if(!strcmp($kind, "staff")) $select_data = "staff.staff_id, staff_name";
     else $select_data = "vehicle.vehicle_id, vehicle_weight, vehicle_type, plate_num";
@@ -446,14 +474,14 @@
     $result = query($sql_query);
     return $result;
   }
-  
+
   function announcement_company_data($company_id){
 	$sql_query = "SELECT * FROM `announcement_company` ";
 	$sql_query .= "WHERE company_id = ".$company_id." ";
 	$result = query($sql_query);
 	return $result;
   }
-  
+
   function query($sql_query){
     require './connDB.php';
     $result = mysqli_query($db_link, $sql_query);

@@ -1,13 +1,29 @@
-
 <?php
 // Include the main TCPDF library (search for installation path).
-require_once('TCPDF/tcpdf.php');
-session_start();
+if(!session_id()) session_start();
 
+require('TCPDF/tcpdf.php');
+
+
+	function query($sql_query){
+		require (dirname(__FILE__).'/connDB.php');
+		$result = mysqli_query($db_link, $sql_query);
+		if(!$result) $result = "Error: ".mysqli_error($db_link);
+		mysqli_close($db_link);
+		return $result;
+	}
+	
+	//$order_id = $_SESSION['order_id'];
+	//$company_id = $_SESSION['company_id'];
 	date_default_timezone_set("Asia/Taipei");
 	// Extend the TCPDF class to create custom Header and Footer
 	// 自訂頁首與頁尾
+	//$company_id = $_SESSION['company_id'];
+	//$order_id = $_SESSION['order_id'];
+	//$company_name = $_SESSION['company_name'];
+	
 	class MYPDF extends TCPDF {
+		
 		//Page header
 		public function Header() {
 			// Set font
@@ -20,7 +36,7 @@ session_start();
 	<table>
 		<tr>
 			<td style="width: 30%;"></td>
-			<td style="border-bottom: 2px solid black; font-size: 20pt; font-weight: normal; text-align: center; width: 40%;">訂單明細表</td>
+			<td style="border-bottom: 2px solid black; font-size: 20pt; font-weight: normal; text-align: center; width: 40%;">服務明細表</td>
 			<td style="width: 30%;"></td>
 		</tr>
 		<tr>
@@ -45,7 +61,15 @@ session_start();
 			<td style="border-bottom: 1px solid black; width: auto;">金額(新台幣)</td>
 		</tr>
 	</table>';
-	
+		$order_id = $_SESSION['order_id'];
+		$company_id = $_SESSION['company_id'];
+		$sql_query1 = "SELECT moving_date FROM `choose` " ;
+		$sql_query1 .= "WHERE order_id = '".$order_id."' AND company_id = '".$company_id."' ;";
+		//$sql_query1 .= "WHERE order_id = 1377 AND company_id = 1;";
+		$result_date = query($sql_query1);
+		$row1 = mysqli_fetch_assoc($result_date);
+		$moving = $row1['moving_date'];
+		
 			// 設定不同頁要顯示的內容 (數值為對應的頁數)
 			switch ($this->getPage()) {
 				case '1':
@@ -57,7 +81,8 @@ session_start();
 	<table cellpadding="1">
 		<tr>
 			<td style="font-size:15px">明細產生時間：' . date('Y-m-d') . ' ' . date('H:i') . '</td>
-			<td align="right" style="font-size:15px" >訂單編號：'.$_SESSION['order_id'].'</td>
+			<td align="center" style="font-size:15px" >搬家日期：'.$moving.'</td>
+			<td align="right" style="font-size:15px" >訂單編號：'.$order_id.'</td>
 			<td></td>        
 		</tr>
 		<tr>
@@ -169,19 +194,32 @@ session_start();
 		* 最後一個 <td> 必須設定 width: auto;，才能將剩餘寬度拉至最寬
 		* style 屬性可使用 text-align: left|center|right; 來設定文字水平對齊方式
 		*/
+		//$hmtl = '';
+		//$variable = '';
+		$order_id = $_SESSION['order_id'];
+		$company_id = $_SESSION['company_id'];
+		$sql_query2 = "SELECT furniture_name, num FROM `furniture_list` NATURAL JOIN furniture " ;
+		$sql_query2 .= "WHERE order_id = '".$order_id."' AND company_id = '".$company_id."' ;";
+		//$sql_query .= "WHERE order_id = 1377 AND company_id = 1;";
 	
+		$results = query($sql_query2);
+		while ($row = mysqli_fetch_assoc($results)) {
+			$variable .= ''.$row['furniture_name'].' ─ 數量  : '.$row['num'].'<br>';
+			
+		}
 		$html .= '
 			<tr>
 				<td style="line-height: 1.5; width: 5px;"></td>
-				<td style="text-align: left; width: 500px;">『'.$_SESSION['company_name'].'』搬家服務</td>
-				<td style="text-align: left; width: auto;">'.$_SESSION['finalAmount'].'元</td>
+				<td style="text-align: left; width: 500px;">『'.$_SESSION['company_name'].'』搬家服務<br></td>
+				<td style="text-align: left; width: auto;">'.$_SESSION['finalAmount'].'元<br><br>'.$variable.'</td>
 			</tr>';
-	
 	
 	$html = '
 	<table cellpadding="20">' . $html . '</table>';
 	
+	$html2 = '搬家負責人 <img src="D:\\xampp\\htdocs\\598_new_20211026\\image\\seal01.jpg" width="100" height="100">';
 	$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 1, 0, true, '', true);
+	$pdf->writeHTMLCell(0, 0, '', '', $html2, 0, 1, 0, true, '', true);
 	
 	// ---------------------------------------------------------
 	
@@ -194,7 +232,7 @@ session_start();
 	
 	$filelocation = "D:\\xampp\\htdocs\\598_new_20211026\\app\\invoice";//windows
 	$fileNL = $filelocation."\\".$filename;//Windows
-	$pdf->Output($fileNL, 'I');
+	//$pdf->Output($fileNL, 'I');
 	$pdf->Output($fileNL, 'F'); //'F':產生檔案 'I':顯示在網頁 
-	session_destroy()
+	//session_destroy()
 ?>	

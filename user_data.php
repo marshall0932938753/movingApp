@@ -11,8 +11,8 @@
 		}
 		else{
 			$today = gmdate("Y-m-d", time() + 3600*8);
-			$result[] = order_member($_POST['company_id'], '2020-01-01', $today, $_POST['status'], 'TRUE');
-			$result[] = order_member($_POST['company_id'], '2020-01-01', $today, $_POST['status'], 'FALSE');
+			$result[] = order_member($_POST['company_id'], '2021-01-01', $today, $_POST['status'], 'TRUE');
+			$result[] = order_member($_POST['company_id'], '2021-01-01', $today, $_POST['status'], 'FALSE');
 		}
 	}
 	elseif (!strcmp("order_member_today",$func)) {
@@ -147,9 +147,15 @@
 	elseif (!strcmp("vehicle_demand_data",$func)) {
 		$result[] = vehicle_demand_data($_POST['order_id'], $_POST['company_id']);
 	}
+	elseif(!strcmp("overlap_staff", $func)){
+	 	$result[] = overlap_staff($_POST['company_id'], $_POST['date']);
+	}
+	elseif(!strcmp("overlap_vehicle", $func)){
+	 	$result[] = overlap_vehicle($_POST['company_id'], $_POST['date']);
+	}
 	elseif(!strcmp("overlap_order", $func)){
 	  $order_num = mysqli_num_rows(order_num());
-	  
+
 	  for($i = 1; $i <= $order_num; $i++){
 			$temp_result = overlap_order($_POST['datetime'], $_POST['endtime'], $i, $_POST['company_id'], "vehicle");
 			if($temp_result->num_rows > 0) $result[] = $temp_result;
@@ -158,11 +164,11 @@
 			$temp_result = overlap_order($_POST['datetime'], $_POST['endtime'], $i, $_POST['company_id'], "staff");
 			if($temp_result->num_rows > 0) $result[] = $temp_result;
 	  }
-		if(!isset($result)){
+		print_r($result);
+		/*if(!isset($result)){
 			echo "no data";
 			return;
-		}
-
+		}*/
 	}
 	elseif(!strcmp("order_num", $func)){
 	  $result[] = order_num();

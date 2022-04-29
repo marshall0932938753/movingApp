@@ -1,10 +1,10 @@
 <?php
 require_once('./PHPMailer/src/PHPMailer.php');
 require_once('./PHPMailer/src/SMTP.php');
-require_once('./PHPMailer/src/Exception.php'); 
+require_once('./PHPMailer/src/Exception.php');
 require_once './PHPMailer/src/POP3.php';
 require_once './PHPMailer/src/OAuth.php';
-//require_once ('./create_pdf.php');   
+//require_once ('./create_pdf.php');
 
 	function query($sql_query){
     require './connDB.php';
@@ -13,6 +13,8 @@ require_once './PHPMailer/src/OAuth.php';
     mysqli_close($db_link);
     return $result;
   }
+	session_start();
+
 	$eMail = $_POST['email'];
 	$order_id = $_POST['order_id'];
 	//$company_id = $_POST['company_id'];
@@ -20,10 +22,9 @@ require_once './PHPMailer/src/OAuth.php';
 	$sql_query = "SELECT * FROM `member` NATURAL JOIN (`orders` NATURAL JOIN `choose`) " ;
 	$sql_query .= "LEFT JOIN `company` ON ";
 	$sql_query .= "choose.company_id = company.company_id WHERE orders.order_id = ".$order_id." ;";
-	
 	$is_done = 0;
 	$not_done = 0;
-	
+
 	$results = query($sql_query);
 	while ($row = mysqli_fetch_assoc($results)) {
 		$variable .= "【".$row['company_name']."】"." 估價狀態: <b><font color=red>".$row['val_done'].'</b><br>' ;
@@ -33,40 +34,40 @@ require_once './PHPMailer/src/OAuth.php';
 			$is_done++;
 		}
 	}
-	
+
 	$default_message= "
-	
+
    ＊ 此信件為系統發出信件，請勿直接回覆，感謝您的配合 ＊<br><br>
     親愛的會員 您好：<br>
-    這封通知信是由598搬家網發出，您的搬家估價單已經完成估價。<br>
+    這封通知信是由598搬家網發出，提醒您有一筆新完成的估價。<br>
 	目前您所選擇的搬家公司估價狀態為： <br><br>".$variable."<br>
-	
+
     請點擊下方網址登入查看並選擇您想要的搬家公司進行搬家，
-	或是等待其餘搬家公司完成報價後再進行選擇，謝謝！</b><br><br>    
+	或是等待其餘搬家公司完成報價後再進行選擇，謝謝！</b><br><br>
     https://598new.ddns.net/598_new_20211026/ <br><br>
-    
+
     感謝您使用598搬家服務網<br>
     598搬家網 敬祝平安順心 <br>
     598搬家網：https://598new.ddns.net/598_new_20211026<br>
     聯絡我們：service@598mover.com <br>
 
    ";
-   
+
 	$allDone_message = "＊ 此信件為系統發出信件，請勿直接回覆，感謝您的配合 ＊<br><br>
     親愛的會員 您好：<br>
     這封通知信是由598搬家網發出，您的搬家估價單已經完成估價。<br>
 	目前您所選擇的搬家公司估價狀態為： <br><br>".$variable."<br>
-	
+
     請點擊下方網址登入查看並選擇您想要的搬家公司進行搬家，謝謝！<br>
- 
+
     https://598new.ddns.net/598_new_20211026/ <br><br>
-    
+
     感謝您使用598搬家服務網<br>
     598搬家網 敬祝平安順心 <br>
     598搬家網：https://598new.ddns.net/598_new_20211026<br>
     聯絡我們：service@598mover.com <br>";
-	
-	
+
+
 	$results = query($sql_query);
     $mail= new PHPMailer\PHPMailer\PHPMailer();                          //建立新物件
     $mail->IsSMTP();                                    //設定使用SMTP方式寄信
@@ -87,12 +88,12 @@ require_once './PHPMailer/src/OAuth.php';
 	}else{
 		$mail->Body = $allDone_message; //郵件內容
 	}
-	
-	
-	
-	
-    $mail->IsHTML(true);                             //郵件內容為html
+
+
+    $mail->IsHTML(true);                  //郵件內容為html
     $mail->AddAddress($eMail);            //收件者郵件及名稱
+	$_SESSION['email'] = $eMail;
+
     if(!$mail->Send()){
 		$result = new stdClass();
 		$result -> status = "Email sent failed: ".$mail->ErrorInfo."Please check your email again.";
@@ -100,7 +101,7 @@ require_once './PHPMailer/src/OAuth.php';
     }else{
 		$result = new stdClass();
 		$result -> status = "Email Sent";
-        echo json_encode($result);
+       echo json_encode($result);
     }
-	
+
 ?>

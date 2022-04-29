@@ -6,7 +6,7 @@ function updatePassword($email, $password_hash){
 	$result = query($sql_query);
 
 	$return_result = new stdClass();
-	
+
 	if($result == null || $result->num_rows < 1) {
     $return_result->status = "failed";
     $return_result->message = "the user doesn't exist.";
@@ -17,13 +17,37 @@ function updatePassword($email, $password_hash){
 	$sql_query .= "user_password = '".$password_hash."' ";
 	$sql_query .= "WHERE user_email = '".$email."';";
 	$result = query($sql_query);
-	
+
 	$return_result->status = "success";
     $return_result->message = "password updated.";
 	echo json_encode($return_result);
 	return json_encode($return_result);
   }
-	
+
+}
+function add_account($company_id, $account, $password, $title, $phone){
+	$password_sha = hash("SHA256", $password);
+	$password_hash = password_hash($password_sha, PASSWORD_BCRYPT);
+	$random = rand(1,100);
+	if(!strcmp($title, "admin")){
+		$name = "管".$random;
+	}else{
+		$name = "工".$random;
+	}
+	$sql_query = "INSERT INTO `user` ( `company_id`, `user_name`, `user_email`, `user_phone`, `user_password`, `title` ) VALUES ";
+	$sql_query .= "('".$company_id."','".$name."', '".$account."', '".$phone."', '".$password_hash."', '".$title."');";
+	$result = query($sql_query);
+	$return = new stdClass();
+	if(!strcmp($result, "1")){
+		$return -> status = "success";
+		$return -> message = "add account success";
+		return json_encode($return);
+	}
+	else{
+		$return -> status = "failed";
+		$return -> message = "add account failed";
+		return json_encode($return);
+	}
 }
 function updateVerifySMS($number){
 	$sql_query = "UPDATE `user` SET `verify_code` = ".$number ;
@@ -80,7 +104,7 @@ function update_user_token($user_email){
 		$return -> status = "success";
 		$return -> message = "update_user_token success";
 		return json_encode($return);
-	} 
+	}
 	else{
 		$return -> status = "failed";
 		$return -> message = "update_user_token failed";
@@ -90,58 +114,58 @@ function update_user_token($user_email){
 
 function update_new($order_id, $company_id, $new){
 	$sql_query = "UPDATE `choose` ";
-	$sql_query .= "SET new = ".$new." ";
+	$sql_query .= "SET new = '".$new."' ";
 	$sql_query .= "WHERE order_id = ".$order_id." ";
-	$sql_query .= "AND company_id = ".$company_id.";";
+	$sql_query .= "AND company_id = ".$company_id." ; " ;
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")){
-		$return -> status = "success";
-		$return -> message = "update_new success";
+		$return -> status = "update_new success";
 		return json_encode($return);
-	} 
+	}
 	else{
-		$return -> status = "failed";
-		$return -> message = "update_new failed";
+		$return -> status = "update_new failed";
+		//$return -> message = "update_new failed";
 		return json_encode($return);
-	} 
+	}
 }
 
-function update_selfValuation($order_id, $company_id, $valuation_date, $valuation_time){
+function update_selfValuation($order_id, $company_id, $valuation_date, $valuation_time, $plan){
+	$planned = $plan;
 	$sql_query = "UPDATE `choose` SET ";
 	$sql_query .= "valuation_date = '".$valuation_date."', ";
 	$sql_query .= "valuation_time = '".$valuation_time."' ";
 	$sql_query .= "WHERE company_id = ".$company_id." ";
-	$sql_query .= "AND order_id = ".$order_id.";";
+	$sql_query .= "AND order_id = ".$order_id." AND plan = '".$plan."' ;";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")){
 		update_confirm($order_id, $company_id);
-
 		$return -> status = "success";
-		$return -> message ="update_selfValuation success: ".change_status($company_id, "choose", $order_id, "booking");
+		$return -> message ="update_selfValuation booking: ".change_status($company_id, "choose", $order_id, "booking", $planned);
 		return json_encode($return);
 	}
 	else {
 		$return -> status = "failed";
 		$return -> message ="update_selfValuation failed";
 		return json_encode($return);
-	} 
+	}
 }
 
-function update_bookingValuation($order_id, $company_id, $moving_date, $estimate_worktime, $fee){
+function update_bookingValuation($order_id, $company_id, $moving_date, $estimate_worktime, $fee, $plan){
+	$planned = $plan;
 	$sql_query = "UPDATE `choose` SET ";
 	$sql_query .= "moving_date = '".$moving_date."', ";
 	$sql_query .= "estimate_worktime = '".$estimate_worktime."', ";
 	$sql_query .= "estimate_fee = '".$fee."', ";
 	$sql_query .= "accurate_fee = '".$fee."' ";
 	$sql_query .= "WHERE company_id = ".$company_id." ";
-	$sql_query .= "AND order_id = ".$order_id.";";
+	$sql_query .= "AND order_id = ".$order_id." AND plan = '".$plan."' ;";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")){
 		$return -> status = "success";
-		$return -> message = "update_bookingValuation to match".change_status($company_id, "choose", $order_id, "match");
+		$return -> message = "update_bookingValuation to match".change_status($company_id, "choose", $order_id, "match", $planned);
 		return json_encode($return);
 	}
 	else {
@@ -150,10 +174,10 @@ function update_bookingValuation($order_id, $company_id, $moving_date, $estimate
 		return json_encode($return);
 	}
 }
-function update_Valuation_Done($order_id, $company_id){
+function update_Valuation_Done($order_id, $company_id, $plan){
 	$sql_query = "UPDATE `choose` SET ";
 	$sql_query .= "val_done = '已完成' " ;
-	$sql_query .= "WHERE order_id =".$order_id." AND company_id = ".$company_id." ;";
+	$sql_query .= "WHERE order_id =".$order_id." AND company_id = ".$company_id." AND plan = '".$plan."' ;";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")){
@@ -179,17 +203,17 @@ function add_vehicleDemands($order_id, $company_id, $vehicleItems){
   	$return -> status = "success";
   	$return -> message = "add_vehicleDemands success";
   	return json_encode($return);
-  } 
+  }
   else{
   	$return -> status = "failed";
   	$return -> message = "add_vehicleDemands failed: ".$check;
   	return json_encode($return);
-  } 
+  }
 }
 
 function add_vehicleDemand($order_id, $company_id, $weight, $type, $num){
   $sql_query = "INSERT INTO `vehicle_demand` (`order_id`, `company_id`, `vehicle_weight`, `vehicle_type`, `num`) VALUES ";
-  $sql_query .= "('".$order_id."', '".$company_id."', '".$weight."', '".$type."', '".$num."');";
+  $sql_query .= "('".$order_id."', '".$company_id."', '".$weight."', '".$type."', '".$num."') ON DUPLICATE KEY UPDATE num =".$num."; ";
   $result = query($sql_query);
   $return = new stdClass();
   if(!strcmp($result, "1")) return "success";
@@ -215,7 +239,7 @@ function update_vehicleDemand($order_id, $company_id, $weight, $type, $num) {
 		$return -> status = "failed";
 		$return -> message = "update_vehicleDemand failed";
   	return json_encode($return);
-	} 
+	}
 }
 function update_vehicleLicense($company_id, $plate_num, $license, $verified){
 	$sql_query = "UPDATE `vehicle` SET license = '".$license."', ";
@@ -234,7 +258,7 @@ function update_vehicleLicense($company_id, $plate_num, $license, $verified){
 		$return -> status = "failed";
 		$return -> message = "update_vehicleLicense failed";
   	return json_encode($return);
-	} 
+	}
 }
 function update_sugCars($company_id, $order_id, $sugCars){
 	$sql_query = "UPDATE `orders` SET SugCars = '".$sugCars."' ";
@@ -251,7 +275,7 @@ function update_sugCars($company_id, $order_id, $sugCars){
 		$return -> status = "failed";
 		$return -> message = "update_sugCars failed";
   	return json_encode($return);
-	} 
+	}
 }
 
 function update_todayOrder($order_id, $company_id, $memo, $accurate_fee){
@@ -264,7 +288,7 @@ function update_todayOrder($order_id, $company_id, $memo, $accurate_fee){
 		$sql_query = "UPDATE `choose` SET ";
 		$sql_query .= "accurate_fee = ".$accurate_fee." ";
 		$sql_query .= "WHERE company_id = ".$company_id." ";
-		$sql_query .= "AND order_id = ".$order_id.";";
+		$sql_query .= "AND order_id = ".$order_id." ;";
 		$result = query($sql_query);
 		if(!strcmp($result, "1")){
 			$return -> status = "success";
@@ -275,7 +299,7 @@ function update_todayOrder($order_id, $company_id, $memo, $accurate_fee){
 			$return -> status = "update accurate_fee";
   		$return -> message = "accurate_fee: ".$result;;
   		return json_encode($return);
-		} 
+		}
 	}
 	else{
 			$return -> status = "failed";
@@ -296,7 +320,7 @@ function modify_staff_vehicle($company_id, $order_id, $vehicle_assign, $staff_as
 			$return -> message = "modify_staff_vehicle success";
 			return json_encode($return);
 		}
-		return change_status($company_id, "orders", $order_id, "assigned");
+		return change_stat($company_id, "orders", $order_id, "assigned");
 	}
   else return $check;
 }
@@ -339,9 +363,10 @@ function delete_vehicleAssignment($order_id, $vehicle_assign){
 	else return $result;
 }
 
-function add_vehicleAssignment($order_id, $vehicle_id){;
+function add_vehicleAssignment($order_id, $vehicle_id){
+
 	$sql_query = "INSERT INTO `vehicle_assignment`(`order_id`, `vehicle_id`) VALUES ";
-	$sql_query .= "(".$order_id.", ".$vehicle_id.");";
+	$sql_query .= "(".$order_id.", ".$vehicle_id.") ON DUPLICATE KEY UPDATE `vehicle_id` = ".$vehicle_id." ;";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")) return "success";
@@ -388,7 +413,7 @@ function delete_staffAssignment($order_id, $staff_assign){
 
 function add_staffAssignment($order_id, $staff_id){;
 	$sql_query = "INSERT INTO `staff_assignment`(`order_id`, `staff_id`) VALUES ";
-	$sql_query .= "(".$order_id.", ".$staff_id.");";
+	$sql_query .= "(".$order_id.", ".$staff_id.") ON DUPLICATE KEY UPDATE `staff_id` = ".$staff_id.";";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")) return "success";
@@ -419,8 +444,8 @@ function transform_order($order_id, $ori_order_id, $id, $kind){
   else return $result;
 }
 
-function add_valuation($company_id, $member_name, $gender, $contact_address, $contact_time, $phone, $additional, 
-						$outcity, $outdistrict, $address1, 
+function add_valuation($company_id, $member_name, $gender, $contact_address, $contact_time, $phone, $additional,
+						$outcity, $outdistrict, $address1,
 						$incity, $indistrict, $address2, $valuation_date, $valuation_time){
 	$member_id = get_memberId($member_name);
 	if(!$member_id){
@@ -502,7 +527,7 @@ function modify_furniture($order_id, $company_id, $furnitureItems){
 		$return -> status = "success";
 		$return -> message = "modify_furniture ";
 		return json_encode($return);
-	} 
+	}
 	else{
 		$return -> status = "failed";
 		$return -> message = "modify_furniture ";
@@ -580,7 +605,7 @@ function add_staff($staff_name, $company_id){
 	 		$return -> status = "failed";
   		$return -> message = "add_staff failed";
   		return json_encode($return);
-	 } 
+	 }
  }
 
 function add_vehicle($plate_num, $vehicle_weight, $vehicle_type, $company_id){
@@ -602,15 +627,15 @@ function add_vehicle($plate_num, $vehicle_weight, $vehicle_type, $company_id){
 
 function delete_staff_vehicle($table, $id){
   if(!strcmp("staff", $table)){
-	$sql_query = "UPDATE ".$table." SET ";  
+	$sql_query = "UPDATE ".$table." SET ";
 	$sql_query .= "end_time = current_timestamp() ";
 	$sql_query .= "WHERE ".$table."_id = ".$id.";";
   }else{
 	$sql_query = "UPDATE ".$table." SET ";
 	$sql_query .= "end_time = current_timestamp(), verified = '3' ";
-	$sql_query .= "WHERE ".$table."_id = ".$id.";";	
+	$sql_query .= "WHERE ".$table."_id = ".$id.";";
   }
-  
+
   $result = query($sql_query);
   $return = new stdClass();
   if(!strcmp($result, "1")){
@@ -681,7 +706,7 @@ function modify_staff_leave($staffItems, $date){
 
 function add_staff_leave($staff_id, $date){
 	$sql_query = "INSERT INTO `staff_leave` (`staff_id`, `leave_date`) VALUES ";
-	$sql_query .= "(".$staff_id.", '".$date."');";
+	$sql_query .= "(".$staff_id.", '".$date."') ON DUPLICATE KEY UPDATE staff_id =".$staff_id.", leave_date = '".$date."' ;";
 	$result = query($sql_query);
 	if(!strcmp($result, "1")) return "success";
 	else return $result;
@@ -741,7 +766,7 @@ function delete_vehicle_maintain($vehicleItema, $date){
 
 function add_vehicle_maintain($vehicle_id, $date){
   $sql_query = "INSERT INTO `vehicle_maintain` (`vehicle_id`, `maintain_date`) VALUES ";
-  $sql_query .= "(".$vehicle_id.", '".$date."');";
+  $sql_query .= "(".$vehicle_id.", '".$date."') ON DUPLICATE KEY UPDATE vehicle_id =".$vehicle_id.", maintain_date = '".$date."' ;";
   $result = query($sql_query);
   if(!strcmp($result, "1")) return "success";
   else return $result;
@@ -771,7 +796,7 @@ function update_companyDistribute($company_id, $last_distribution){
 	$sql_query .= "WHERE company_id = ".$company_id.";";
 	$result = query($sql_query);
 	$return = new stdClass();
-  if(!strcmp($result, "1")) 
+  if(!strcmp($result, "1"))
   {
   	$return -> status = "success";
 	 	$return -> message = "update_companyDistribute success";
@@ -801,7 +826,7 @@ function update_company($company_id, $address, $phone, $staff_num, $url, $email,
 		$return -> status = "success";
 	 	$return -> message = "update_company success";
 	 	return json_encode($return);
-	} 
+	}
 	else{
 		$return -> status = "failed";
 	 	$return -> message = "update_company failed";
@@ -821,7 +846,7 @@ function modify_serviceItems($company_id, $enableItems, $disableItems, $deleteIt
 		$return -> status = "failed";
 	 	$return -> message = "modify_serviceItems failed";
 	 	return json_encode($return);
-  } 
+  }
   else{
 		$return -> status = "success";
 	 	$return -> message = "modify_serviceItems success ";
@@ -924,8 +949,8 @@ function modify_fix_discount($company_id, $fixDiscount, $isEnable){
   if(!strcmp($result, "1")){
 	$return -> status = "success";
 	$return -> message = "modify_fix_discount success";
-	return json_encode($return);  
-  } 
+	return json_encode($return);
+  }
   else{
 	 $return -> status = "failed";
 	$return -> message = "update_address failed";
@@ -943,9 +968,9 @@ function modify_contact_address($member_id){
   	$return -> status = "success";
 	$return -> message = "update_address success";
 	$result_json = json_encode($return, JSON_FORCE_OBJECT);
-	
+
 	return $result_json;
-  } 
+  }
   else{
   	$return -> status = "failed";
 	 	$return -> message = "update_address failed";
@@ -1022,7 +1047,7 @@ function update_reply($comment_id, $reply){
   	$return -> status = "success";
 	 	$return -> message = "update_reply success";
 	 	return json_encode($return);
-  } 
+  }
   else{
   	$return -> status = "failed";
 	 	$return -> message = "update_reply failed";
@@ -1041,7 +1066,7 @@ function update_announcement_new($announcement_id, $company_id){
   	$return -> status = "success";
 	 	$return -> message = "update_announcement_new success";
 	 	return json_encode($return);
-  } 
+  }
   else{
   	$return -> status = "failed";
 	 	$return -> message = "update_announcement_new failed";
@@ -1049,13 +1074,13 @@ function update_announcement_new($announcement_id, $company_id){
   }
 }
 
-function change_status($company_id, $table, $order_id, $status){
+function change_status($company_id, $table, $order_id, $status, $plan){
+	$planned = $plan;
 	$sql_query = "UPDATE `".$table."` ";
 	if(!strcmp("choose", $table)) $sql_query .= "SET valuation_status = '".$status."' ";
 	else $sql_query .= "SET order_status = '".$status."' ";
 	$sql_query .= "WHERE order_id = '".$order_id."' ";
-	if(!strcmp("choose",$table))
-		$sql_query .= "AND company_id = '".$company_id."' ";
+	if(!strcmp("choose",$table)) $sql_query .= "AND company_id = '".$company_id."' AND plan = '".$planned."'";
 	$sql_query .= ";";
 	$result = query($sql_query);
 	$return = new stdClass();
@@ -1071,11 +1096,34 @@ function change_status($company_id, $table, $order_id, $status){
 	else return json_encode("change_status(".$status."):".$result);
 }
 
-function change_all_status($company_id, $order_id, $status){
+function change_stat($company_id, $table, $order_id, $status){
+
+	$sql_query = "UPDATE `".$table."` ";
+	if(!strcmp("choose", $table)) $sql_query .= "SET valuation_status = '".$status."' ";
+	else $sql_query .= "SET order_status = '".$status."' ";
+	$sql_query .= "WHERE order_id = '".$order_id."' ";
+	if(!strcmp("choose",$table))
+		$sql_query .= "AND company_id = '".$company_id."'";
+	$sql_query .= ";";
+	$result = query($sql_query);
+	$return = new stdClass();
+	if(!strcmp($result, "1")) {
+		$result2 = update_new($order_id, $company_id, 1);
+		if(!strcmp($result2, "success")){
+			$return -> status = "success";
+			$return -> message = "change status success";
+			 return json_encode($return);
+		}
+		else return json_encode("update_new:".$result2);
+	}
+	else return json_encode("change_status(".$status."):".$result);
+}
+
+function change_all_status($company_id, $order_id, $status, $plan){
 	$sql_query = "UPDATE `choose` SET ";
 	$sql_query .= "valuation_status = '".$status."' ";
 	$sql_query .= "WHERE order_id = '".$order_id."' ";
-	$sql_query .= "AND company_id != '".$company_id."';";
+	$sql_query .= "AND company_id != '".$company_id."' AND plan = '".$plan."' ;";
 	$result = query($sql_query);
 	$return = new stdClass();
 	if(!strcmp($result, "1")) return "success";
@@ -1129,10 +1177,11 @@ function today_order($order_id, $company_id){
 	}
 }
 
-function become_order($company_id, $order_id){
-	$check[] = change_all_status($company_id, $order_id, "cancel");
-	$check[] = change_status($company_id, "choose", $order_id, "chosen");
-	$check[] = change_status($company_id, "orders", $order_id, "scheduled");
+function become_order($company_id, $order_id, $plan){
+	$planned = $plan;
+	$check[] = change_all_status($company_id, $order_id, "cancel", $planned);
+	$check[] = change_status($company_id, "choose", $order_id, "chosen", $plan);
+	$check[] = change_stat($company_id, "orders", $order_id, "scheduled");
 	$return = new stdClass();
 	if(count(array_unique($check))===1 && end($check)==="success"){
 		$return ->status = "failed";
@@ -1150,7 +1199,7 @@ function get_payment_result($order_id){
 	$result = query($sql_query);
 	$return = new stdClass();
 	$row_result = mysqli_fetch_assoc($result);
-	
+
 	if(!strcmp($row_result['credit_paid'], "paid")){
 		$return ->status = "order_paid";
 		return json_encode($return);

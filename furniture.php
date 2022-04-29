@@ -56,7 +56,7 @@
 		return $result;
 	}
 
-	if(!isset($result) || $result->num_rows == 0){
+	if(!isset($result) ||  $result->num_rows == 0){
 		echo "null";
 		return;
 	}

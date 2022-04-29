@@ -8,16 +8,15 @@ require 'connDB.php';
 	return $result;
 	}
 
-   $file_path = "./management/uploads";
+   $file_path = "D:/xampp/htdocs/management/uploads/";
    //$file_path = "car_license/";
-     
+
    $file_path = $file_path . basename( $_FILES['uploaded_file']['name']);
-  
+
    if(move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $file_path)) {
        echo $file_path;
-		
+
    } else{
        echo "fail";
    }
 ?>
- 

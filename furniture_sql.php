@@ -10,17 +10,17 @@
    $result = query($sql_query);
    return $result;
   }
-  
+
   function convert_furniture($order_id, $company_id){
-   $sql_query = "INSERT INTO furniture_list (order_id, company_id, furniture_id, num) ";
+   $sql_query = "INSERT INTO furniture_list (order_id, company_id, furniture_id, num) " ;
    $sql_query .= "SELECT order_id, ".$company_id.", furniture_id, num \n" ;
-   $sql_query .= "FROM furniture_list " ;
-   $sql_query .= "WHERE order_id = ".$order_id." ";
+   $sql_query .= "FROM furniture_list WHERE order_id = ".$order_id." ON DUPLICATE KEY UPDATE company_id = ".$company_id." " ;
+   //$sql_query .= "WHERE order_id = ".$order_id." ";
    $result = query($sql_query);
-   var_dump($result);
+   //var_dump($result);
    return $result;
   }
-  
+
   function furniture_fine_detail($order_id, $company_id){
    $sql_query = "SELECT * ";
    $sql_query .= "FROM `furniture` NATURAL JOIN `furniture_list` ";
@@ -33,7 +33,7 @@
 
   function get_all_furniture(){
 	$sql_query = "SELECT * ";
-	$sql_query .= "FROM `furniture";
+	$sql_query .= "FROM `furniture` ";
 	$result = query($sql_query);
    return $result;
   }
@@ -77,7 +77,7 @@
     $result = query($sql_query);
     return $result;
   }
-  
+
   function modify_web_furniture($order_id, $company_id, $furnitureItems){
 	$ja = json_decode($furnitureItems, true);
 	$return = new stdClass();
@@ -87,10 +87,10 @@
 
       $original = get_furniture($order_id, 999, $furniture_id);
       $ori_furniture_item = mysqli_fetch_assoc($original);
-	  
+
 	  $original_comp = get_furniture($order_id, $company_id, $furniture_id);
       $oricomp_furniture_item = mysqli_fetch_assoc($original_comp);
-	  
+
       if(mysqli_num_rows(get_furniture($order_id, 999, $furniture_id)) != 0){
 		if($ori_furniture_item["furniture_id"] == $furniture_id){
 			if(mysqli_num_rows($original) == 0 && $num == 0)
@@ -106,7 +106,7 @@
 					$check[$key] = add_furniture($order_id, $company_id, $furniture_id, $num);
 				}else{
 					$check[$key] = update_furniture($order_id, $company_id, $furniture_id, $num);
-				}	
+				}
 			}
 		}elseif($oricomp_furniture_item["furniture_id"] == $furniture_id){
 			if(mysqli_num_rows($original_comp) != 0 && $num == 0)
@@ -119,16 +119,16 @@
 				//$check[$key] = update_furniture($order_id, $company_id, $furniture_id, $num);
 			if(mysqli_num_rows($original_comp) != 0 && $num !=0){
 				$check[$key] = add_furniture($order_id, $company_id, $furniture_id, $num);
-				$check[$key] = update_furniture($order_id, $company_id, $furniture_id, $num);	
+				$check[$key] = update_furniture($order_id, $company_id, $furniture_id, $num);
 			}
-		}			
-        
+		}
+
       }
       else {
-        if(mysqli_num_rows($original) == 0 || $num == 0) 
+        if(mysqli_num_rows($original) == 0 || $num == 0)
 			$check[$key] = delete_furniture($order_id, $company_id, $furniture_id);
-		if(mysqli_num_rows($original) != 0 || $num != 0) 
-			$check[$key] = add_furniture($order_id, $company_id, $furniture_id, $num);	
+		if(mysqli_num_rows($original) != 0 || $num != 0)
+			$check[$key] = add_furniture($order_id, $company_id, $furniture_id, $num);
 		if(mysqli_num_rows($original_comp) != 0 && $num != $oricomp_furniture_item["num"])
 			$check[$key] = update_furniture($order_id, $company_id, $furniture_id, $num);
 		if(mysqli_num_rows($original_comp) != 0 && $num == 0)
@@ -156,7 +156,7 @@
     foreach ($ja as $key => $furniture_item) {
       $furniture_id = $furniture_item[0];
       $num = $furniture_item[1];
-	
+
       $original = get_furniture($order_id, 999, $furniture_id);
       $ori_furniture_item = mysqli_fetch_assoc($original);
       if(mysqli_num_rows(get_furniture($order_id, $company_id, $furniture_id)) == 1){
@@ -183,7 +183,7 @@
 		$return -> status = "failed";
 		$return -> message = "modify_furniture failed ";
 		return json_encode($return);
-	} 
+	}
   }
   function calculate_furniture($duration, $distance, $movefrom, $moveto, $furnitureItems){
 	$ja = json_decode($furnitureItems, true);
@@ -191,11 +191,16 @@
     foreach ($ja as $key => $furniture_item) {
       $furniture_id = $furniture_item[0];
 	  $num = $furniture_item[1];
-	  if(strlen($furniture_id) != 3){
-		$furniture_id = substr($furniture_id, 0, 3);
-	  }else{
-		$furniture_id = $furniture_id ;
-	  }
+    if(str_starts_with($furniture_id, '862')){
+      $furniture_id = '862';
+    }else{
+      $furniture_id = $furniture_id;
+    }
+	  //if(strlen($furniture_id) != 3){
+		//    $furniture_id = substr($furniture_id, 0, 3);
+	  //}else{
+		//    $furniture_id = $furniture_id ;
+	  //}
 	  //$furniture_array = array("Id:" => $furniture_id, "Count:" => $num);
 	  //$result = '{'.'"Id"'.":".'"'.$furniture_id.'"'.',"';
 	  //$result .= 'Count"'.':"'.$num.'"}, ';
@@ -206,7 +211,7 @@
 	$url = "https://igprice.com/api/price/GetPrice";
 	// Create a new cURL resource
 	$ch = curl_init($url);
-	
+
 	// Setup request to send json via POST
 	$data = '{
     "DURATION":"'.$duration.'",
@@ -216,22 +221,22 @@
         "OBJARY": ['.$str.'],
 	}'	;
     $data="'".$data."'";
-	
+
 	// Attach encoded JSON string to the POST fields
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-	
+
 	// Set the content type to application/json
 	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-	
+
 	// Return response instead of outputting
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	
+
 	// Execute the POST request
 	$response_result = curl_exec($ch);
-	
+
 	// Close cURL resource
 	curl_close($ch);
-	
+
 	return ($response_result);
   }
   function get_furniture($order_id, $company_id, $furniture_id){

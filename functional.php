@@ -16,6 +16,9 @@
 		echo json_encode($result);
 		return;
 	}
+	elseif(!strcmp("add_account", $func)){
+		$result = add_account($_POST['company_id'], $_POST['account'], $_POST['password'], $_POST['title'], $_POST['phone']);
+	}
 	elseif(!strcmp("update_new", $func)){
 		$result = update_new($_POST['order_id'], $_POST['company_id'], $_POST['new']);
 	}
@@ -29,15 +32,15 @@
 		  $vtimes[$i] = implode(':', $vtime);
 		}
 		$valuation_time = implode('~', $vtimes);
-		$result = update_selfValuation($_POST['order_id'], $_POST['company_id'], $_POST['valuation_date'], $valuation_time);
+		$result = update_selfValuation($_POST['order_id'], $_POST['company_id'], $_POST['valuation_date'], $valuation_time, $_POST['plan']);
 	}
 	elseif(!strcmp("update_bookingValuation", $func)){
 		$result = update_bookingValuation(
 			$_POST['order_id'], $_POST['company_id'],
-			$_POST['moving_date'], $_POST['estimate_worktime'], $_POST['fee']);
+			$_POST['moving_date'], $_POST['estimate_worktime'], $_POST['fee'], $_POST['plan']);
 	}
 	elseif(!strcmp("update_Valuation_Done", $func)){
-		$result = update_Valuation_Done($_POST['order_id'], $_POST['company_id']);
+		$result = update_Valuation_Done($_POST['order_id'], $_POST['company_id'], $_POST['plan']);
 	}
 	elseif(!strcmp("add_vehicleDemands", $func)){
 	  $result = add_vehicleDemands($_POST['order_id'], $_POST['company_id'], $_POST['vehicleItems']);
@@ -51,14 +54,14 @@
 	elseif(!strcmp("add_valuation", $func)){
 		$result = add_valuation($_POST['company_id'], $_POST['member_name'], $_POST['gender'], $_POST['contact_address'],$_POST['contact_time'], $_POST['phone'],
 		                        $_POST['additional'], $_POST['outcity'], $_POST['outdistrict'], $_POST['address1'],
-								$_POST['incity'], $_POST['indistrict'], $_POST['address2'], 
+								$_POST['incity'], $_POST['indistrict'], $_POST['address2'],
 								$_POST['valuation_date'], $_POST['valuation_time']);
 	}
 	elseif(!strcmp("add_order", $func)){
-		$result = add_order($_POST['company_id'], $_POST['member_name'], 
+		$result = add_order($_POST['company_id'], $_POST['member_name'],
 							$_POST['gender'], $_POST['phone'], $_POST['additional'], $_POST['contact_address'],
-							$_POST['outcity'], $_POST['outdistrict'], $_POST['address1'], 
-							$_POST['incity'], $_POST['indistrict'], $_POST['address2'], 
+							$_POST['outcity'], $_POST['outdistrict'], $_POST['address1'],
+							$_POST['incity'], $_POST['indistrict'], $_POST['address2'],
 							$_POST['moving_date'], $_POST['estimate_fee'], $_POST['worktime'], $_POST['furniture_data']);
 	}
 	elseif(!strcmp("add_staff", $func)){
@@ -101,13 +104,16 @@
 		$result = update_announcement_new($_POST['announcement_id'], $_POST['company_id']);
 	}
 	elseif(!strcmp("change_status", $func)){
-		$result = change_status($_POST['company_id'], $_POST['table'], $_POST['order_id'], $_POST['status']);
+		$result = change_status($_POST['company_id'], $_POST['table'], $_POST['order_id'], $_POST['status'], $_POST['plan']);
+	}
+	elseif(!strcmp("change_stat", $func)){
+		$result = change_stat($_POST['company_id'], $_POST['table'], $_POST['order_id'], $_POST['status']);
 	}
 	elseif(!strcmp("today_order", $func)){
 		$result = today_order($_POST['order_id'], $_POST['company_id']);
 	}
 	elseif(!strcmp("become_order", $func)){
-		$result = become_order($_POST['company_id'], $_POST['order_id']);
+		$result = become_order($_POST['company_id'], $_POST['order_id'], $_POST['plan']);
 	}
 	elseif(!strcmp("update_vehicleLicense", $func)){
 		$result = update_vehicleLicense($_POST['company_id'], $_POST['plate_num'], $_POST['license'], $_POST['verified']);
