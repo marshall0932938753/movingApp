@@ -1,11 +1,11 @@
 # movingAppPHP
 
-## API updated and uploaded on 12/24 for 598MovingApp
+## newesetAPI updated and uploaded on 04/29 for 598MovingApp
 API includes : 
 * functions for valuations and orders
-* staffs and cars
+* staffs and cars assignments and add/delete
 * furniture
-* payment
+* online payment
 * bonus_distribution
 * signature_Pad
   
