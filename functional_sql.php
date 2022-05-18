@@ -28,11 +28,11 @@ function updatePassword($email, $password_hash){
 function add_account($company_id, $account, $password, $title, $phone){
 	$password_sha = hash("SHA256", $password);
 	$password_hash = password_hash($password_sha, PASSWORD_BCRYPT);
-	$random = rand(1,100);
+	$result = substr(uniqid(),-5); // generate an unique ID for user_name
 	if(!strcmp($title, "admin")){
-		$name = "管".$random;
+		$name = "管".$result;
 	}else{
-		$name = "工".$random;
+		$name = "工".$result;
 	}
 	$sql_query = "INSERT INTO `user` ( `company_id`, `user_name`, `user_email`, `user_phone`, `user_password`, `title` ) VALUES ";
 	$sql_query .= "('".$company_id."','".$name."', '".$account."', '".$phone."', '".$password_hash."', '".$title."');";
