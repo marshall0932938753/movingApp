@@ -8,4 +8,4 @@ API includes :
 * online payment
 * bonus_distribution
 * signature_Pad
-##More detail for how API works @ : https://docs.google.com/document/d/11VqH1V-hkCU4lqp5Ws4Tx0_6SDVnaxYX/edit#
+##More detail for how API works @ : https://docs.google.com/document/d/1YSlL56ein3W1LYCLWj9PUEkrVaydf2i5/edit?usp=sharing&ouid=108162613158806193136&rtpof=true&sd=true
