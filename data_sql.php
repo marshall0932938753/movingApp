@@ -275,8 +275,9 @@
     $sql_query .= "INNER JOIN staff ";
     $sql_query .= "ON staff_assignment.staff_id = staff.staff_id ";
     $sql_query .= "INNER JOIN choose ON staff_assignment.order_id = choose.order_id ";
-    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date."' ";
-    $sql_query .= "AND moving_date <= '".$date." 23:59:59' ; ";
+    $sql_query .= "INNER JOIN orders ON staff_assignment.order_id = orders.order_id ";
+    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date." 00:00:00' ";
+    $sql_query .= "AND moving_date <= '".$date." 23:59:59' AND (order_status <> 'done' AND order_status <> 'paid' AND order_status <> 'finished'); ";
     $result = query($sql_query);
     return $result;
   }
@@ -285,8 +286,9 @@
     $sql_query .= "INNER JOIN vehicle ";
     $sql_query .= "ON vehicle_assignment.vehicle_id = vehicle.vehicle_id ";
     $sql_query .= "INNER JOIN choose ON vehicle_assignment.order_id = choose.order_id ";
-    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date."' ";
-    $sql_query .= "AND moving_date <= '".$date." 23:59:59' ; ";
+    $sql_query .= "INNER JOIN orders ON vehicle_assignment.order_id = orders.order_id ";
+    $sql_query .= "WHERE choose.company_id = ".$company_id." AND moving_date >= '".$date." 00:00:00' ";
+    $sql_query .= "AND moving_date <= '".$date." 23:59:59' AND (order_status <> 'done' AND order_status <> 'paid' AND order_status <> 'finished'); ";
     $result = query($sql_query);
     return $result;
   }
